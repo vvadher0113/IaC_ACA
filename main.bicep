@@ -155,7 +155,7 @@ param acaInternalOnly bool = true
 param containerAppImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
 @description('Optional. Target port for ingress traffic.')
-param containerAppTargetPort int = 80
+param containerAppTargetPort int = 8080
 
 @description('Optional. Minimum number of replicas. Use 0 to allow scale-to-zero.')
 @minValue(0)
@@ -372,6 +372,7 @@ module containerApp 'bicep-avm-modules/avm/res/app/container-app/main.bicep' = i
     // Internal environment — ingress is VNet-internal only, not exposed externally
     ingressExternal: false
     ingressTargetPort: containerAppTargetPort
+    ingressAllowInsecure: false  // reject HTTP, enforce HTTPS (required for HIPAA/HiTrust)
     scaleSettings: {
       minReplicas: containerAppMinReplicas
       maxReplicas: containerAppMaxReplicas

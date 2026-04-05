@@ -86,6 +86,6 @@ param acaInternalOnly = true   // Internal-only LB — no public runtime endpoin
 // Container App Parameters
 // ===========================================================================================================================================
 param containerAppImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
-param containerAppTargetPort = 80
+param containerAppTargetPort = 8080
 param containerAppMinReplicas = 0    // 0 = scale-to-zero enabled
 param containerAppMaxReplicas = 3
