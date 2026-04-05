@@ -1,0 +1,3 @@
+[submodule "bicep-avm-modules"]
+	path = bicep-avm-modules
+	url = https://TFTESTVV@dev.azure.com/TFTESTVV/AgileProject/_git/bicep-avm-modules
