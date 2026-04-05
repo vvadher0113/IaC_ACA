@@ -200,6 +200,7 @@ module vnetModule 'bicep-avm-modules/avm/res/network/virtual-network/main.bicep'
       {
         name: acaInfraSubnetName
         addressPrefix: acaInfraSubnet
+        delegation: 'Microsoft.App/environments'  // required for VNet-injected Container Apps Environment
       }
     ]
   }
@@ -246,6 +247,7 @@ module acr 'bicep-avm-modules/avm/res/container-registry/registry/main.bicep' = 
     privateEndpoints: deployAcrPrivateEndpoint ? [
       {
         name: '${acrName}-pe'
+        customNetworkInterfaceName: '${acrName}-pe-nic'
         service: 'registry'
         subnetResourceId: vnetModule!.outputs.subnetResourceIds[0]
         privateDnsZoneGroup: !empty(acrPrivateDnsZoneResourceId) ? {
@@ -291,6 +293,7 @@ module keyVault './bicep-avm-modules/avm/res/key-vault/vault/main.bicep' = if (d
     privateEndpoints: deployKeyVaultPrivateEndpoint ? [
       {
         name: '${keyVaultName}-pe'
+        customNetworkInterfaceName: '${keyVaultName}-pe-nic'
         subnetResourceId: vnetModule!.outputs.subnetResourceIds[0]
         service: 'vault'
         privateDnsZoneGroup: !empty(keyVaultPrivateDnsZoneResourceId) ? {
@@ -330,6 +333,9 @@ module acaEnvironment 'bicep-avm-modules/avm/res/app/managed-environment/main.bi
     infrastructureSubnetResourceId: vnetModule!.outputs.subnetResourceIds[1]
     internal: acaInternalOnly
     publicNetworkAccess: 'Disabled'
+    managedIdentities: {
+      systemAssigned: true
+    }
     zoneRedundant: acaZoneRedundant
     appLogsConfiguration: deployLogAnalyticsWorkspace ? {
       destination: 'log-analytics'
@@ -337,6 +343,23 @@ module acaEnvironment 'bicep-avm-modules/avm/res/app/managed-environment/main.bi
     } : null
   }
 }
+// ===========================================================================
+// Private Endpoint for Container Apps Environment
+//============================================================================
+module acaPrivateEndpoint 'modules/private-endpoint.bicep' = if (deployAcaEnvironment) {
+  name: 'acaPrivateEndpointDeployment'
+  scope: resourceGroup(SubscriptionId, resourceGroupName)
+  params: {
+    name: '${acaEnvironmentName}-pe'
+    customNetworkInterfaceName: '${acaEnvironmentName}-pe-nic'
+    location: location
+    tags: tags
+    subnetResourceId: vnetModule!.outputs.subnetResourceIds[0] // Use a non-delegated subnet for the PE
+    privateLinkServiceId: acaEnvironment!.outputs.resourceId
+    groupId: 'managedEnvironments' // Required group ID for ACA Environments
+  }
+}
+
 
 // ===========================================================================
 // Container App — pulls images from private ACR via system-assigned managed identity

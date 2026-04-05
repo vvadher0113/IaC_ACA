@@ -13,10 +13,10 @@ param tags = {
 // Feature Flags
 // ===========================================================================================================================================
   // Phase 1: Core Infrastructure
-param deployVNet = false
-param deployLogAnalyticsWorkspace = false
-param deployKeyVault = false
-param deployAcr = false
+param deployVNet = true
+param deployLogAnalyticsWorkspace = true
+param deployKeyVault = true
+param deployAcr = true
 
   // Phase 2: Private Endpoints
 param deployKeyVaultPrivateEndpoint = false
@@ -53,8 +53,8 @@ param acaInfraSubnet = '10.250.250.64/26'           // ACA Environment infrastru
 // ===========================================================================================================================================
 // Private DNS Zone Parameters
 // ===========================================================================================================================================
-param acrPrivateDnsZoneResourceId = '/subscriptions/ca16bf0f-3a7a-42e8-9e31-f7f558d91ad1/resourceGroups/vv-aca-rg/providers/Microsoft.Network/privateDnsZones/privatelink.azurecr.io'
-param keyVaultPrivateDnsZoneResourceId = '/subscriptions/ca16bf0f-3a7a-42e8-9e31-f7f558d91ad1/resourceGroups/vv-aca-rg/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net'
+param acrPrivateDnsZoneResourceId = ''
+param keyVaultPrivateDnsZoneResourceId = ''
 
 // ===========================================================================================================================================
 // Log Analytics Workspace Parameters
