@@ -14,11 +14,12 @@ param tags = {
 // ===========================================================================================================================================
   // Phase 1: Core Infrastructure
 param deployVNet = true
+param deployNatGateway = true   // NAT Gateway: provides outbound internet for the ACA subnet to pull container images; not required if using a public image with "Public" ingress or if using a private image with "Limited to VNet" ingress and the registry allows trusted Microsoft services (see https://learn.microsoft.com/azure/container-apps/managed-identity-acr#acr-configuration)  
 param deployLogAnalyticsWorkspace = true
-param deployKeyVault = true
-param deployAcr = true
 
-  // Phase 2: Private Endpoints
+  // Phase 2: Resource with Private Endpoints // Need Private DNS Zones
+param deployKeyVault = false
+param deployAcr = false
 param deployKeyVaultPrivateEndpoint = false
 param deployAcrPrivateEndpoint = false
 
@@ -29,7 +30,7 @@ param deployContainerApp = false
   // Phase 4: ACR Role Assignment
   // Assigns AcrPull to the Container App's system-assigned managed identity.
 param deployAcrRoleAssignment = false
-
+ 
 // ===========================================================================================================================================
 // Azure Resource Naming Parameters
 // ===========================================================================================================================================
@@ -40,6 +41,7 @@ param keyVaultName = 'vv-aca-kv'
 param acrName = 'vvacacr01'
 param acaEnvironmentName = 'vv-aca-env'
 param containerAppName = 'vv-aca-app'
+param natGatewayName = 'vv-aca-natgw'
 
 // ===========================================================================================================================================
 // VNet Parameters
@@ -80,7 +82,7 @@ param acrsoftDeletePolicyStatus = 'disabled'
 // Container Apps Environment Parameters
 // ===========================================================================================================================================
 param acaZoneRedundant = false
-param acaInternalOnly = true   // Internal-only LB — no public runtime endpoint
+param acaInternalOnly = true   // Internal-only LB — VNet-private static IP; required for "Limited to VNet" ingress
 
 // ===========================================================================================================================================
 // Container App Parameters

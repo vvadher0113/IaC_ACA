@@ -46,6 +46,9 @@ param deployContainerApp bool = true
 @description('Optional. Flag to deploy the AcrPull role assignment for the Container App managed identity. Deploy after Phase 3.')
 param deployAcrRoleAssignment bool = false
 
+@description('Optional. Flag to deploy a NAT Gateway for outbound internet access from the ACA infrastructure subnet.')
+param deployNatGateway bool = true
+
 // ===========================================================================================================================================
 // Azure Resource Naming Parameters
 //============================================================================================================================================
@@ -69,6 +72,9 @@ param acaEnvironmentName string
 
 @description('Required. Name of the Container App.')
 param containerAppName string
+
+@description('Required if deployNatGateway is true. Name of the NAT Gateway.')
+param natGatewayName string = ''
 
 // ===========================================================================================================================================
 // VNet Parameters
@@ -179,6 +185,29 @@ module resourceGroupModule 'bicep-avm-modules/avm/res/resources/resource-group/m
 }
 
 //===========================================================================
+// NAT Gateway (provides outbound internet for VNet-injected ACA to pull images)
+//===========================================================================
+module natGateway 'bicep-avm-modules/avm/res/network/nat-gateway/main.bicep' = if (deployNatGateway) {
+  name: 'natGatewayDeployment'
+  scope: resourceGroup(SubscriptionId, resourceGroupName)
+  dependsOn: [
+    resourceGroupModule
+  ]
+  params: {
+    name: natGatewayName
+    location: location
+    tags: tags
+    availabilityZone: -1 // Zone-redundant; set to 1/2/3 to pin to a specific zone 
+    publicIPAddresses: [
+      {
+        name: '${natGatewayName}-pip'
+        availabilityZones: [] // Empty = no zone assignment; required for regions that do not support availability zones (e.g. West US)
+      }
+    ]
+  }
+}
+
+//===========================================================================
 // Virtual Network and Subnets
 //===========================================================================
 module vnetModule 'bicep-avm-modules/avm/res/network/virtual-network/main.bicep' = if (deployVNet) {
@@ -196,11 +225,13 @@ module vnetModule 'bicep-avm-modules/avm/res/network/virtual-network/main.bicep'
       {
         name: azureResourcesSubnetName
         addressPrefix: azzureResourcesSubnet
+        natGatewayResourceId: deployNatGateway ? natGateway!.outputs.resourceId : ''
       }
       {
         name: acaInfraSubnetName
         addressPrefix: acaInfraSubnet
         delegation: 'Microsoft.App/environments'  // required for VNet-injected Container Apps Environment
+        natGatewayResourceId: deployNatGateway ? natGateway!.outputs.resourceId : ''
       }
     ]
   }
@@ -310,15 +341,6 @@ module keyVault './bicep-avm-modules/avm/res/key-vault/vault/main.bicep' = if (d
 
 // ===========================================================================
 // Container Apps Managed Environment
-//
-// Network isolation is achieved via three controls:
-//   internal: true             — internal-only LB, no public runtime endpoint
-//   publicNetworkAccess: 'Disabled' — disables public management plane access
-//   infrastructureSubnetResourceId  — VNet-injects the environment
-//
-// Note: The AVM app/managed-environment module does not expose a
-// privateEndpoints parameter. VNet injection + internal mode is the
-// equivalent pattern for Container Apps Environment isolation.
 // ===========================================================================
 module acaEnvironment 'bicep-avm-modules/avm/res/app/managed-environment/main.bicep' = if (deployAcaEnvironment) {
   name: 'acaEnvironmentDeployment'
@@ -375,13 +397,6 @@ module containerApp 'bicep-avm-modules/avm/res/app/container-app/main.bicep' = i
     managedIdentities: {
       systemAssigned: true
     }
-    // Pull from private ACR using system-assigned managed identity (no admin credentials)
-    registries: [
-      {
-        server: acr!.outputs.loginServer
-        identity: 'system'
-      }
-    ]
     containers: [
       {
         name: containerAppName
@@ -392,10 +407,8 @@ module containerApp 'bicep-avm-modules/avm/res/app/container-app/main.bicep' = i
         }
       }
     ]
-    // Internal environment — ingress is VNet-internal only, not exposed externally
-    ingressExternal: false
+    ingressExternal: true
     ingressTargetPort: containerAppTargetPort
-    ingressAllowInsecure: false  // reject HTTP, enforce HTTPS (required for HIPAA/HiTrust)
     scaleSettings: {
       minReplicas: containerAppMinReplicas
       maxReplicas: containerAppMaxReplicas
