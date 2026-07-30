@@ -174,7 +174,7 @@ param containerAppMaxReplicas int = 3
 // ===========================================================================================================================================
 // Resource Group
 //============================================================================================================================================
-module resourceGroupModule 'bicep-avm-modules/avm/res/resources/resource-group/main.bicep' = {
+module resourceGroupModule 'br/public:avm/res/resources/resource-group:0.4.3' = {
   name: 'resourceGroupDeployment'
   scope: subscription(SubscriptionId)
   params: {
@@ -187,7 +187,7 @@ module resourceGroupModule 'bicep-avm-modules/avm/res/resources/resource-group/m
 //===========================================================================
 // NAT Gateway (provides outbound internet for VNet-injected ACA to pull images)
 //===========================================================================
-module natGateway 'bicep-avm-modules/avm/res/network/nat-gateway/main.bicep' = if (deployNatGateway) {
+module natGateway 'br/public:avm/res/network/nat-gateway:2.1.0' = if (deployNatGateway) {
   name: 'natGatewayDeployment'
   scope: resourceGroup(SubscriptionId, resourceGroupName)
   dependsOn: [
@@ -210,7 +210,7 @@ module natGateway 'bicep-avm-modules/avm/res/network/nat-gateway/main.bicep' = i
 //===========================================================================
 // Virtual Network and Subnets
 //===========================================================================
-module vnetModule 'bicep-avm-modules/avm/res/network/virtual-network/main.bicep' = if (deployVNet) {
+module vnetModule 'br/public:avm/res/network/virtual-network:0.9.0' = if (deployVNet) {
   name: 'vnetDeployment'
   scope: resourceGroup(SubscriptionId, resourceGroupName)
   dependsOn: [
@@ -240,7 +240,7 @@ module vnetModule 'bicep-avm-modules/avm/res/network/virtual-network/main.bicep'
 //===========================================================================
 // Log Analytics Workspace
 //===========================================================================
-module logAnalyticsWorkspace 'bicep-avm-modules/avm/res/operational-insights/workspace/main.bicep' = if (deployLogAnalyticsWorkspace) {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.16.0' = if (deployLogAnalyticsWorkspace) {
   name: 'logAnalyticsWorkspaceDeployment'
   scope: resourceGroup(SubscriptionId, resourceGroupName)
   dependsOn: [
@@ -258,7 +258,7 @@ module logAnalyticsWorkspace 'bicep-avm-modules/avm/res/operational-insights/wor
 // ==========================================================================
 // Azure Container Registry (Premium SKU, public access disabled, private endpoint)
 // ==========================================================================
-module acr 'bicep-avm-modules/avm/res/container-registry/registry/main.bicep' = if (deployAcr) {
+module acr 'br/public:avm/res/container-registry/registry:0.12.1' = if (deployAcr) {
   name: 'acrDeployment'
   scope: resourceGroup(SubscriptionId, resourceGroupName)
   dependsOn: [
@@ -296,7 +296,7 @@ module acr 'bicep-avm-modules/avm/res/container-registry/registry/main.bicep' = 
 // ==================================================================
 // Azure Key Vault (public access disabled, private endpoint)
 // ===================================================================
-module keyVault './bicep-avm-modules/avm/res/key-vault/vault/main.bicep' = if (deployKeyVault) {
+module keyVault 'br/public:avm/res/key-vault/vault:0.14.0' = if (deployKeyVault) {
   name: 'KeyVaultDeployment'
   scope: resourceGroup(SubscriptionId, resourceGroupName)
   dependsOn: [
@@ -342,7 +342,7 @@ module keyVault './bicep-avm-modules/avm/res/key-vault/vault/main.bicep' = if (d
 // ===========================================================================
 // Container Apps Managed Environment
 // ===========================================================================
-module acaEnvironment 'bicep-avm-modules/avm/res/app/managed-environment/main.bicep' = if (deployAcaEnvironment) {
+module acaEnvironment 'br/public:avm/res/app/managed-environment:0.15.0' = if (deployAcaEnvironment) {
   name: 'acaEnvironmentDeployment'
   scope: resourceGroup(SubscriptionId, resourceGroupName)
   dependsOn: [
@@ -386,7 +386,7 @@ module acaPrivateEndpoint 'modules/private-endpoint.bicep' = if (deployAcaEnviro
 // ===========================================================================
 // Container App — pulls images from private ACR via system-assigned managed identity
 // ===========================================================================
-module containerApp 'bicep-avm-modules/avm/res/app/container-app/main.bicep' = if (deployAcaEnvironment && deployContainerApp) {
+module containerApp 'br/public:avm/res/app/container-app:0.23.0' = if (deployAcaEnvironment && deployContainerApp) {
   name: 'containerAppDeployment'
   scope: resourceGroup(SubscriptionId, resourceGroupName)
   params: {
